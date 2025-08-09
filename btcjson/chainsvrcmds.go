@@ -833,6 +833,21 @@ func NewGetUtreexoTTLRootsCmd() *GetUtreexoTTLRootsCmd {
 	return &GetUtreexoTTLRootsCmd{}
 }
 
+// IsOutpointSpentCmd defines the isoutpointspent JSON-RPC command.
+type IsOutpointSpentCmd struct {
+	TxID string
+	Vout uint32
+}
+
+// NewIsOutpointSpentCmd returns a new instance which can be used to issue a
+// isoutpointspent JSON-RPC command.
+func NewIsOutpointSpentCmd(txID string, vout uint32) *IsOutpointSpentCmd {
+	return &IsOutpointSpentCmd{
+		TxID: txID,
+		Vout: vout,
+	}
+}
+
 // GetWorkCmd defines the getwork JSON-RPC command.
 type GetWorkCmd struct {
 	Data *string
@@ -1350,6 +1365,7 @@ func init() {
 	MustRegisterCmd("getutreexoproof", (*GetUtreexoProofCmd)(nil), flags)
 	MustRegisterCmd("getutreexoroots", (*GetUtreexoRootsCmd)(nil), flags)
 	MustRegisterCmd("getutreexottlroots", (*GetUtreexoTTLRootsCmd)(nil), flags)
+	MustRegisterCmd("isoutpointspent", (*IsOutpointSpentCmd)(nil), flags)
 	MustRegisterCmd("getwork", (*GetWorkCmd)(nil), flags)
 	MustRegisterCmd("getwatchonlybalance", (*GetWatchOnlyBalanceCmd)(nil), flags)
 	MustRegisterCmd("help", (*HelpCmd)(nil), flags)

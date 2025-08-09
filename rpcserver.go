@@ -183,6 +183,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getutreexoproof":                    handleGetUtreexoProof,
 	"getutreexoroots":                    handleGetUtreexoRoots,
 	"getutreexottlroots":                 handleGetUtreexoTTLRoots,
+	"isoutpointspent":                    handleIsOutpointSpent,
 	"getwatchonlybalance":                handleGetWatchOnlyBalance,
 	"invalidateblock":                    handleInvalidateBlock,
 	"help":                               handleHelp,
@@ -309,6 +310,7 @@ var rpcLimited = map[string]struct{}{
 	"getrawmempool":              {},
 	"getrawtransaction":          {},
 	"gettxout":                   {},
+	"isoutpointspent":            {},
 	"getutreexoproof":            {},
 	"getutreexoroots":            {},
 	"getutreexottlroots":         {},
@@ -3550,6 +3552,43 @@ func handleGetUtreexoTTLRoots(s *rpcServer, cmd interface{}, closeChan <-chan st
 	}
 
 	return utreexoSummaryRootsReply, nil
+}
+
+// handleIsOutpointSpent implements the isoutpointspent command.
+func handleIsOutpointSpent(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*btcjson.IsOutpointSpentCmd)
+
+	// Convert the provided transaction hash hex to a Hash.
+	txHash, err := chainhash.NewHashFromStr(c.TxID)
+	if err != nil {
+		return nil, rpcDecodeHexError(c.TxID)
+	}
+
+	// Create the outpoint from the provided txid and vout.
+	outpoint := wire.NewOutPoint(txHash, c.Vout)
+
+	// Check if the outpoint is unspent in the UTXO set.
+	entry, err := s.cfg.Chain.FetchUtxoEntry(*outpoint)
+	if err != nil {
+		return nil, &btcjson.RPCError{
+			Code:    btcjson.ErrRPCDatabase,
+			Message: fmt.Sprintf("Database error: %s", err),
+		}
+	}
+
+	// Build the result.
+	result := &btcjson.IsOutpointSpentResult{
+		Spent: entry == nil,
+	}
+
+	// If the outpoint is spent (not in UTXO set), check if it's being spent
+	// by a transaction in the mempool.
+	if result.Spent && s.cfg.TxMemPool != nil {
+		spendingTx := s.cfg.TxMemPool.CheckSpend(*outpoint)
+		result.InMempool = spendingTx != nil
+	}
+
+	return result, nil
 }
 
 // handleProveWatchOnlyChainTipInclusion implements the handleprovewatchonly command.

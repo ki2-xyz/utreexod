@@ -947,6 +947,12 @@ type GetUtreexoTTLRootsResult struct {
 	NumLeaves uint64   `json:"numleaves"`
 }
 
+// IsOutpointSpentResult models the data from the isoutpointspent command.
+type IsOutpointSpentResult struct {
+	Spent     bool `json:"spent"`
+	InMempool bool `json:"in_mempool,omitempty"`
+}
+
 // ProveWatchOnlyChainTipInclusionVerboseResult models the data from the
 // provewatchonlychaintipinclusion command when the verbose flag is set.  When the
 // verbose flag is not set, just the hex-encoded string of the entire proof
